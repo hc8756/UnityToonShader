@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Plain
-  m_Shader: {fileID: 4800000, guid: 2518a823f74e1904a80885e5aee17f31, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3a13b007b0863984081ee860275691bd, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -46,7 +46,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _MyState: 4
+    - _MyState: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

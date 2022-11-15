@@ -95,23 +95,7 @@ float4 Fragment(VertexOutput input) : SV_TARGET{
 	float3 totalColor;
 
 	//Alter return value based on switch statement (determined by C# script)
-	[branch] switch (_MyState)
-	{
-		case 1:
-			totalColor = float3(0, 0, 0);
-			break;
-		case 2:
-			totalColor = diffuseColor * ambientTerm;
-			break;
-		case 3:
-			diffuseTerm *= (shadowTerm/5);
-			totalColor = diffuseColor * aoColor * (ambientTerm + diffuseTerm);
-			break;
-		case 4:
-			diffuseTerm *= (shadowTerm / 5);
-			totalColor = diffuseColor * aoColor * (ambientTerm + diffuseTerm + specularTerm);
-			break;
-		case 5:
+	
 			//Loop through additional lights (Point=has attenuation)
 			int addLightNum = GetAdditionalLightsCount();
 			for (int i = 0; i < addLightNum; i++) {
@@ -134,10 +118,5 @@ float4 Fragment(VertexOutput input) : SV_TARGET{
 			}
 			diffuseTerm *= (shadowTerm / 5);
 			totalColor = diffuseColor * aoColor * (ambientTerm + diffuseTerm + specularTerm);
-			break;
-		default:
-			totalColor = float3(0, 0, 0);
-			break;
-	}
 	return  float4(totalColor, 1);
 }
