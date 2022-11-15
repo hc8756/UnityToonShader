@@ -92,7 +92,7 @@ float4 Fragment(VertexOutput input) : SV_TARGET{
 
 	//Declare return value
 	float3 totalColor;
-	
+
 	//Loop through additional lights (Point=has attenuation)
 	int addLightNum = GetAdditionalLightsCount();
 	for (int i = 0; i < addLightNum; i++) {
@@ -115,5 +115,8 @@ float4 Fragment(VertexOutput input) : SV_TARGET{
 	}
 	diffuseTerm *= (shadowTerm / 5);
 	totalColor = diffuseColor * aoColor * (ambientTerm + diffuseTerm + specularTerm);
-	return  float4(totalColor, 1);
+	float totalColorR = ceil(totalColor.x * 10) / 10;
+	float totalColorG = ceil(totalColor.y * 10) / 10;
+	float totalColorB = ceil(totalColor.z * 10) / 10;
+	return  float4(totalColorR, totalColorG, totalColorB, 1);
 }

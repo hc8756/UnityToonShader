@@ -1,9 +1,9 @@
-Shader "Unlit/MyBasicShader"
+Shader "Unlit/MyToonShader"
 {
     //Properties documentation: https://docs.unity3d.com/2021.3/Documentation/Manual/SL-Properties.html
     //Information to be held in HLSL constant buffer
     Properties{
-        _MyDiffuseTexture("Diffuse Texture", 2D) = "grey" {}
+        _MyDiffuseTexture("Diffuse Texture", 2D) = "red" {}
         _MyNormalTexture("Normal Texture", 2D) = "bump" {}
         _MySpecularTexture("Specular Texture", 2D) = "black" {}
         _MyRoughnessTexture("Roughness Texture", 2D) = "white" {}
@@ -28,7 +28,7 @@ Shader "Unlit/MyBasicShader"
                 #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
                 #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
                 #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-                #include "ForwardLit.hlsl"
+                #include "ForwardLitToon.hlsl"
             ENDHLSL
         }
         Pass{
@@ -37,8 +37,7 @@ Shader "Unlit/MyBasicShader"
             HLSLPROGRAM
                 #pragma vertex Vertex
                 #pragma fragment Fragment
- 
-                #include "ForwardLitShadows.hlsl"
+                #include "ForwardLitShadowsToon.hlsl"
             ENDHLSL
         }
     }
