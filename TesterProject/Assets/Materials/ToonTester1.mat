@@ -62,7 +62,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MyDiffuseTexture:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 0b49fd10dcc155547a885c35072b403a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MyNormalMap:
@@ -71,6 +71,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MyNormalTexture:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MyRampTexture:
+        m_Texture: {fileID: 2800000, guid: f974cc50b69a2aa4185382bbcb244b20, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MyRoughnessTexture:
