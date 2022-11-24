@@ -133,6 +133,7 @@ Material:
     - _GlossyReflections: 0
     - _HueVariationKwToggle: 0
     - _Metallic: 0
+    - _MySpecVal: 0.07
     - _NormalMapKwToggle: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005

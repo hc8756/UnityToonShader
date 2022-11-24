@@ -3,8 +3,8 @@ Shader "Unlit/MyToonShader"
 	Properties{
 		_MyDiffuseTexture("Diffuse Texture", 2D) = "grey" {}
 		_MyNormalMap("Normal Map", 2D) = "bump" {}
-		_MySpecularTexture("Specular Map", 2D) = "black" {}
-		_MyRampTexture("ColorRamp", 2D) = "white" {}
+		_MyRampTexture("Color Ramp", 2D) = "white" {}
+		_MySpecVal("Specular Value", Float)=0
 	}
 
 	SubShader{
@@ -22,9 +22,9 @@ Shader "Unlit/MyToonShader"
 			CBUFFER_START(UnityPerMaterial)
 			texture2D _MyDiffuseTexture;
 			texture2D _MyNormalMap;
-			texture2D _MySpecularTexture;
 			texture2D _MyRampTexture;
-			SamplerState my_linear_clamp_sampler;
+			float _MySpecVal;
+			SamplerState my_linear_clamp_sampler; //name determines sampler state settings
 			CBUFFER_END
 
 			struct VertexInput {
@@ -83,14 +83,19 @@ Shader "Unlit/MyToonShader"
 				float rampMult = _MyRampTexture.Sample(my_linear_clamp_sampler, rampUV).r;//don't use input.uv, use attenuation value for u, v doesn't matter
 				
 				//Get information for specular lighting
-				float specVal = _MySpecularTexture.Sample(my_linear_clamp_sampler, input.uv).r;
-				float shine = 256.0f;
 				float3 viewDir = normalize(_WorldSpaceCameraPos - input.positionWS);
 				float3 reflectDir = reflect(-lightDir, input.normalWS);
 				float RdotV = saturate(dot(reflectDir, viewDir));
-				//Specular term 
-				float3 specularTerm = pow(RdotV, shine) * lightCol * specVal;
-
+				float3 specularTerm;
+				if (RdotV > _MySpecVal) {
+					specularTerm = float3(_MySpecVal, _MySpecVal, _MySpecVal);
+				}
+				else {
+					specularTerm = float3(0, 0, 0);
+				}
+				//Shiny= smaller, brighter highlight
+				//Dull= wider, duller highlight
+				
 				//Ambient term
 				float3 ambientTerm = float3(0.4f, 0.6f, 0.75f);// sky blue color
 
