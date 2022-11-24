@@ -20,9 +20,9 @@ Shader "Unlit/MyToonShader"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 			
 			CBUFFER_START(UnityPerMaterial)
-			sampler2D _MyDiffuseTexture;
-			sampler2D _MyNormalMap;
-			sampler2D _MySpecularTexture;
+			texture2D _MyDiffuseTexture;
+			texture2D _MyNormalMap;
+			texture2D _MySpecularTexture;
 			texture2D _MyRampTexture;
 			SamplerState my_linear_clamp_sampler;
 			CBUFFER_END
@@ -58,11 +58,11 @@ Shader "Unlit/MyToonShader"
 
 			float4 Fragment(VertexOutput input) : SV_TARGET{
 				
-				float3 diffuseColor = tex2D(_MyDiffuseTexture, input.uv).rgb;
-				
+				//Extract information from diffuse map
+				float3 diffuseColor = _MyDiffuseTexture.Sample(my_linear_clamp_sampler, input.uv).rgb;
 
 				//Extract information from normal map
-				float3 unpackedNormal = tex2D(_MyNormalMap, input.uv).rgb * 2 - 1;
+				float3 unpackedNormal = _MyNormalMap.Sample(my_linear_clamp_sampler, input.uv).rgb * 2 - 1;
 
 				float3 N = normalize(input.normalWS);
 				float3 B = normalize(input.bitangentWS);
@@ -82,8 +82,8 @@ Shader "Unlit/MyToonShader"
 				float2 rampUV = float2(diffuseAtten, 0);
 				float rampMult = _MyRampTexture.Sample(my_linear_clamp_sampler, rampUV).r;//don't use input.uv, use attenuation value for u, v doesn't matter
 				
-																						  //Get information for specular lighting
-				float specVal = tex2D(_MySpecularTexture, input.uv).r;
+				//Get information for specular lighting
+				float specVal = _MySpecularTexture.Sample(my_linear_clamp_sampler, input.uv).r;
 				float shine = 256.0f;
 				float3 viewDir = normalize(_WorldSpaceCameraPos - input.positionWS);
 				float3 reflectDir = reflect(-lightDir, input.normalWS);
@@ -99,10 +99,6 @@ Shader "Unlit/MyToonShader"
 
 				float3 totalColor;
 				totalColor = rampMult * diffuseColor * (ambientTerm + diffuseTerm + specularTerm);
-				/*float totalColorR = ceil(totalColor.x * 10) / 10;
-				float totalColorG = ceil(totalColor.y * 10) / 10;
-				float totalColorB = ceil(totalColor.z * 10) / 10;
-				return  float4(totalColorR, totalColorG, totalColorB, 1);*/
 				return  float4(totalColor, 1);
 			}
 			ENDHLSL
