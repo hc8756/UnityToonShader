@@ -10,8 +10,6 @@ Shader "Unlit/MyToonShader"
 	SubShader{
 		Tags { "RenderPipeline" = "UniversalPipeline" }
 		Pass {
-			Name "ForwardLit"
-			Tags {"LightMode" = "UniversalForward"}
 			HLSLPROGRAM
 			#pragma vertex Vertex
 			#pragma fragment Fragment
@@ -20,11 +18,11 @@ Shader "Unlit/MyToonShader"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 			
 			CBUFFER_START(UnityPerMaterial)
-			texture2D _MyDiffuseTexture;
-			texture2D _MyNormalMap;
-			texture2D _MyRampTexture;
-			float _MySpecVal;
-			SamplerState my_linear_clamp_sampler; //name determines sampler state settings
+				texture2D _MyDiffuseTexture;
+				texture2D _MyNormalMap;
+				texture2D _MyRampTexture;
+				float _MySpecVal;
+				SamplerState my_linear_clamp_sampler; //name determines sampler state settings
 			CBUFFER_END
 
 			struct VertexInput {
@@ -107,39 +105,7 @@ Shader "Unlit/MyToonShader"
 				return  float4(totalColor, 1);
 			}
 			ENDHLSL
-		}
-
-		Pass{
-		Name "ShadowPass"
-		Tags {"LightMode" = "ShadowCaster"}
-		HLSLPROGRAM
-			#pragma vertex Vertex
-			#pragma fragment Fragment
-
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
-			struct VertexInput {
-				float3 positionOS		: POSITION;
-			};
-
-			struct VertexOutput {
-				float4 positionCS		: SV_POSITION;
-			};
-
-			VertexOutput Vertex(VertexInput input) {
-				VertexOutput output;
-
-				VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS);
-				output.positionCS = posInputs.positionCS;
-
-				return output;
-			}
-
-			float4 Fragment(VertexOutput input) : SV_TARGET{
-				return  0;
-			}
-		ENDHLSL
-		}
+		}		
 	}
     Fallback "Diffuse"
 }
