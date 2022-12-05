@@ -3,9 +3,9 @@ Shader "Unlit/OutlineShader"
     Properties
     {
         _Thickness("Outline Thickness", Float) = 1
-        _Color("Outline Color", Vector) = (0,0,0,1)
+        _Color("Outline Color", Vector) = (0,0,0)
     }
-    SubShader
+        SubShader
     {
         Tags { "RenderPipeline" = "UniversalPipeline" }
 
@@ -16,91 +16,86 @@ Shader "Unlit/OutlineShader"
             #pragma fragment Fragment
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-
-            struct VertexInput {
-                float3 positionOS		: POSITION0;
-                float2 uv				: TEXCOORD;
-                float3 normalOS			: NORMAL;
-                float4 tangentOS		: TANGENT;
-            };
-
-            struct VertexOutput {
-                float4 positionCS		: SV_POSITION;
-                float3 positionWS		: POSITION1;
-                float2 uv				: TEXCOORD;
-                float3 normalWS			: NORMAL;
-                float3 tangentWS		: TANGENT0;
-                float3 bitangentWS		: TANGENT1;
-            };
-
             CBUFFER_START(UnityPerMaterial)
+                float _Thickness;
+                vector _Color;
                 texture2D _CameraColorTexture;
                 SamplerState sampler_CameraColorTexture;
                 float4 _CameraColorTexture_TexelSize;
                 texture2D _CameraDepthTexture;
                 SamplerState sampler_CameraDepthTexture;
-                float _Thickness;
-                vector _Color;
             CBUFFER_END
 
-            float4 Outline_float(float2 UV, float OutlineThickness, float4 OutlineColor)
+            struct VertexInput {
+                float3 positionOS		: POSITION;
+                float2 uv				: TEXCOORD;
+            };
+
+            struct VertexOutput {
+                float4 positionCS		: SV_POSITION;
+                float2 uv				: TEXCOORD;
+            };
+
+            float4 Outline_float(float2 UV, float outlineThickness, float3 outlineColor)
             {
-                float halfScaleFloor = floor(OutlineThickness * 0.5);
-                float halfScaleCeil = ceil(OutlineThickness * 0.5);
+                float sobelMatrixX[9] = {
+                    -1, 0, 1,
+                    -2, 0, 2,
+                    -1, 0, 1
+                };
+
+                float sobelMatrixY[9] = {
+                    1, 2, 1,
+                    0, 0, 0,
+                    -1, -2, -1
+                };
+
+                //for now we are using color not depth
                 float2 Texel = (1.0) / float2(_CameraColorTexture_TexelSize.z, _CameraColorTexture_TexelSize.w);
+                float2 uvSamples[9];
+                float3 depthSamples[9];//change this back to float if you want to use depth 
 
-                float2 uvSamples[4];
-                float depthSamples[4];
-                float3 colorSamples[4];
+                float3 horizTotal = float3(0,0,0);//this too
+                float3 vertTotal = float3(0, 0, 0);//this too
 
-                uvSamples[0] = UV - float2(Texel.x, Texel.y) * halfScaleFloor;
-                uvSamples[1] = UV + float2(Texel.x, Texel.y) * halfScaleCeil;
-                uvSamples[2] = UV + float2(Texel.x * halfScaleCeil, -Texel.y * halfScaleFloor);
-                uvSamples[3] = UV + float2(-Texel.x * halfScaleFloor, Texel.y * halfScaleCeil);
+                uvSamples[0] = UV + float2(-Texel.x, -Texel.y);
+                uvSamples[1] = UV + float2(0, -Texel.y);
+                uvSamples[2] = UV + float2(Texel.x, -Texel.y);
 
-                for (int i = 0; i < 4; i++)
+                uvSamples[3] = UV + float2(-Texel.x, 0);
+                uvSamples[4] = UV + float2(0, 0);
+                uvSamples[5] = UV + float2(Texel.x, 0);
+
+                uvSamples[6] = UV + float2(-Texel.x, Texel.y);
+                uvSamples[7] = UV + float2(0, Texel.y);
+                uvSamples[8] = UV + float2(Texel.x, Texel.y);
+
+                for (int i = 0; i < 9; i++)
                 {
-                    depthSamples[i] = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uvSamples[i]).r;
-                    colorSamples[i] = _CameraColorTexture.Sample(sampler_CameraColorTexture, uvSamples[i]).rgb;
+                    //depthSamples[i] = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uvSamples[i]).r;
+                    depthSamples[i] = _CameraColorTexture.Sample(sampler_CameraColorTexture, uvSamples[i]).rgb;
+                    horizTotal += depthSamples[i] * sobelMatrixX[i];
+                    vertTotal += depthSamples[i] * sobelMatrixY[i];
                 }
 
-                // Depth
-                float depthFiniteDifference0 = depthSamples[1] - depthSamples[0];
-                float depthFiniteDifference1 = depthSamples[3] - depthSamples[2];
-                float edgeDepth = sqrt(pow(depthFiniteDifference0, 2) + pow(depthFiniteDifference1, 2)) * 100;
-                //2 is depth sensitivity
-                float depthThreshold = (1 / 2) * depthSamples[0];
-                edgeDepth = edgeDepth > depthThreshold ? 1 : 0;
-
-                // Color
-                float3 colorFiniteDifference0 = colorSamples[1] - colorSamples[0];
-                float3 colorFiniteDifference1 = colorSamples[3] - colorSamples[2];
-                float edgeColor = sqrt(dot(colorFiniteDifference0, colorFiniteDifference0) + dot(colorFiniteDifference1, colorFiniteDifference1));
-                //2 is color sensitivity
-                edgeColor = edgeColor > (1 / 2) ? 1 : 0;
-
-                float edge = max(edgeDepth, edgeColor);
-                float4 original = _CameraColorTexture.Sample(sampler_CameraColorTexture, uvSamples[0]).rgba;
-
-                return ((1 - edge) * original) + (edge * lerp(original, OutlineColor, OutlineColor.a));
+                float3 mag = sqrt(horizTotal * horizTotal + vertTotal * vertTotal);
+                float sobel = saturate(mag.x + mag.y + mag.z);
+                float3 original = _CameraColorTexture.Sample(sampler_CameraColorTexture, UV).rgb;
+                float3 p1 = lerp(original, outlineColor, sobel);
+                return float4(p1, 1);
             }
 
-			VertexOutput Vertex(VertexInput input) {
-				VertexOutput output;
-				VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS);
-				output.positionCS = posInputs.positionCS;
-				output.positionWS = posInputs.positionWS;
-				output.uv = input.uv;
-				VertexNormalInputs normInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
-				output.normalWS = normInputs.normalWS;
-				output.tangentWS = normInputs.tangentWS;
-				output.bitangentWS = normInputs.bitangentWS;
-				return output;
-			}
+            VertexOutput Vertex(VertexInput input) {
+                VertexOutput output;
+                VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS);
+                output.positionCS = posInputs.positionCS;
+                output.uv = input.uv;
+                return output;
+            }
 
             float4 Fragment(VertexOutput input) : SV_TARGET{
                 return Outline_float(input.uv,_Thickness,_Color);
-			}
+            }
             ENDHLSL
         }
     }

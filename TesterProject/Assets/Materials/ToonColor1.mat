@@ -146,6 +146,7 @@ Material:
     - _SubsurfaceIndirect: 0.25
     - _SubsurfaceKwToggle: 0
     - _Surface: 0
+    - _Thickness: 1
     - _TwoSided: 2
     - _WindQuality: 0
     - _WorkflowMode: 1

@@ -27,12 +27,11 @@ public class SobelFeature : ScriptableRendererFeature
     public class SobelPass : ScriptableRenderPass {
         /*Parameters of blit function*/
         private RenderTargetIdentifier source;
-        private RenderTargetIdentifier dest;
         private Material blitMat = null; //this is the material w/ the post processing shader
         RenderTargetHandle tempTex; //will be used to get temporary rt later
 
-        //Constructor
-        public SobelPass(Material mat) {
+        public SobelPass(Material mat) 
+        {
             blitMat = mat;
         }
         public void SetSource(RenderTargetIdentifier id)

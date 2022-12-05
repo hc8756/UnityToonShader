@@ -10,6 +10,7 @@ Shader "Unlit/MyToonShader"
 	SubShader{
 		Tags { "RenderPipeline" = "UniversalPipeline" }
 		Pass {
+			Tags { "LightMode" = "UniversalForward" }
 			HLSLPROGRAM
 			#pragma vertex Vertex
 			#pragma fragment Fragment
