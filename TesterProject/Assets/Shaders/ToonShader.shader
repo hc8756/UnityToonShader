@@ -107,6 +107,37 @@ Shader "Unlit/MyToonShader"
 			}
 			ENDHLSL
 		}		
+		Pass{
+			Name "ShadowPass"
+			Tags {"LightMode" = "ShadowCaster"}
+			HLSLPROGRAM
+				#pragma vertex Vertex
+				#pragma fragment Fragment
+
+				#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+				struct VertexInput {
+					float3 positionOS		: POSITION;
+				};
+
+				struct VertexOutput {
+					float4 positionCS		: SV_POSITION;
+				};
+
+				VertexOutput Vertex(VertexInput input) {
+					VertexOutput output;
+
+					VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS);
+					output.positionCS = posInputs.positionCS;
+
+					return output;
+				}
+
+				float4 Fragment(VertexOutput input) : SV_TARGET{
+					return  0;
+				}
+			ENDHLSL
+		}
 	}
     Fallback "Diffuse"
 }
