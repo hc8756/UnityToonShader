@@ -5,10 +5,9 @@ Shader "Unlit/OutlineShader"
         _Thickness("Outline Thickness", Float) = 1
         _Color("Outline Color", Vector) = (0,0,0)
     }
-        SubShader
+    SubShader
     {
         Tags { "RenderPipeline" = "UniversalPipeline" }
-
         Pass
         {
             HLSLPROGRAM
@@ -50,13 +49,12 @@ Shader "Unlit/OutlineShader"
                     -1, -2, -1
                 };
 
-                //for now we are using color not depth
                 float2 Texel = (1.0) / float2(_CameraColorTexture_TexelSize.z, _CameraColorTexture_TexelSize.w);
                 float2 uvSamples[9];
-                float3 depthSamples[9];//change this back to float if you want to use depth 
+                float depthSamples[9];
 
-                float3 horizTotal = float3(0,0,0);//this too
-                float3 vertTotal = float3(0, 0, 0);//this too
+                float horizTotal = 0;
+                float vertTotal = 0;
 
                 uvSamples[0] = UV + float2(-Texel.x, -Texel.y);
                 uvSamples[1] = UV + float2(0, -Texel.y);
@@ -72,8 +70,7 @@ Shader "Unlit/OutlineShader"
 
                 for (int i = 0; i < 9; i++)
                 {
-                    //depthSamples[i] = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uvSamples[i]).r;
-                    depthSamples[i] = _CameraColorTexture.Sample(sampler_CameraColorTexture, uvSamples[i]).rgb;
+                    depthSamples[i] = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uvSamples[i]).r;
                     horizTotal += depthSamples[i] * sobelMatrixX[i];
                     vertTotal += depthSamples[i] * sobelMatrixY[i];
                 }

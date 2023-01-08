@@ -4,14 +4,11 @@ using UnityEngine.Rendering.Universal;
 
 public class SobelFeature : ScriptableRendererFeature
 {
-    public Material sobelMat = null;
     private SobelPass sobelPass;
-    private RenderTargetHandle newTarget;
+    public Material sobelMat = null;
     public override void Create()
     {
         sobelPass = new SobelPass(sobelMat);
-        sobelPass.renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
-        newTarget.Init("_RenderTaget");
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -20,15 +17,17 @@ public class SobelFeature : ScriptableRendererFeature
             Debug.LogWarningFormat("Missing Material");
             return;
         }
+        sobelPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
         sobelPass.SetSource(renderer.cameraColorTarget);
         renderer.EnqueuePass(sobelPass);
     }
 
     public class SobelPass : ScriptableRenderPass {
-        /*Parameters of blit function*/
         private RenderTargetIdentifier source;
-        private Material blitMat = null; //this is the material w/ the post processing shader
-        RenderTargetHandle tempTex; //will be used to get temporary rt later
+        private RenderTargetIdentifier destination;
+        int destinationId;
+        int temporaryRTId = Shader.PropertyToID("_TempRT");
+        private Material blitMat = null; 
 
         public SobelPass(Material mat) 
         {
@@ -40,14 +39,21 @@ public class SobelFeature : ScriptableRendererFeature
         }
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            CommandBuffer cmd = CommandBufferPool.Get(name: "_SobelPass");
+            //store commands to execute in buffer
+            CommandBuffer cmd = CommandBufferPool.Get("_SobelPass");
 
             //post processing code goes here
-            RenderTextureDescriptor targDesc = renderingData.cameraData.cameraTargetDescriptor;
-            cmd.GetTemporaryRT(tempTex.id, targDesc, FilterMode.Point);
-            Blit(cmd, source, tempTex.Identifier(), blitMat, 0);
-            Blit(cmd, tempTex.Identifier(), source);
+            //blit function documentation: https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@7.1/api/UnityEngine.Rendering.Universal.ScriptableRenderPass.html#UnityEngine_Rendering_Universal_ScriptableRenderPass_Blit_CommandBuffer_RenderTargetIdentifier_RenderTargetIdentifier_Material_System_Int32_
+            //first blit destination and second blit source is a temporary rendering target
+            destinationId = temporaryRTId;
+            RenderTextureDescriptor blitTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
+            cmd.GetTemporaryRT(destinationId, blitTargetDescriptor, FilterMode.Point);
+            destination = new RenderTargetIdentifier(destinationId);
 
+            Blit(cmd, source, destination, blitMat, 0); 
+            Blit(cmd, destination, source);
+
+            //execute commands in buffer
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
