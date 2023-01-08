@@ -7,7 +7,7 @@ Shader "Unlit/OutlineShader"
     }
     SubShader
     {
-        Tags { "RenderPipeline" = "UniversalPipeline" }
+        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "Opaque"}
         Pass
         {
             HLSLPROGRAM
@@ -17,7 +17,7 @@ Shader "Unlit/OutlineShader"
 
             CBUFFER_START(UnityPerMaterial)
                 float _Thickness;
-                vector _Color;
+                float3 _Color;
                 texture2D _CameraColorTexture;
                 SamplerState sampler_CameraColorTexture;
                 float4 _CameraColorTexture_TexelSize;

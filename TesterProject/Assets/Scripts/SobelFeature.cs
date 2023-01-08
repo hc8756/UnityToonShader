@@ -17,8 +17,6 @@ public class SobelFeature : ScriptableRendererFeature
             Debug.LogWarningFormat("Missing Material");
             return;
         }
-        sobelPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
-        sobelPass.SetSource(renderer.cameraColorTarget);
         renderer.EnqueuePass(sobelPass);
     }
 
@@ -32,10 +30,12 @@ public class SobelFeature : ScriptableRendererFeature
         public SobelPass(Material mat) 
         {
             blitMat = mat;
+            renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
-        public void SetSource(RenderTargetIdentifier id)
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            source = id;
+            var renderer = renderingData.cameraData.renderer;
+            source = renderer.cameraColorTarget;
         }
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
