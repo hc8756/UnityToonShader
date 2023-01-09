@@ -7,13 +7,17 @@ Shader "Unlit/OutlineShader"
     }
     SubShader
     {
-        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "Opaque"}
+        Tags {"RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+        Cull Off ZWrite Off ZTest Always
         Pass
         {
+          
             HLSLPROGRAM
             #pragma vertex Vertex
             #pragma fragment Fragment
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            
 
             CBUFFER_START(UnityPerMaterial)
                 float _Thickness;
@@ -21,8 +25,8 @@ Shader "Unlit/OutlineShader"
                 texture2D _CameraColorTexture;
                 SamplerState sampler_CameraColorTexture;
                 float4 _CameraColorTexture_TexelSize;
-                texture2D _CameraDepthTexture;
-                SamplerState sampler_CameraDepthTexture;
+                //texture2D _CameraDepthTexture;
+                //SamplerState sampler_CameraDepthTexture;
             CBUFFER_END
 
             struct VertexInput {
@@ -34,9 +38,10 @@ Shader "Unlit/OutlineShader"
                 float4 positionCS		: SV_POSITION;
                 float2 uv				: TEXCOORD;
             };
-
+            
             float4 Outline_float(float2 UV, float outlineThickness, float3 outlineColor)
             {
+                
                 float sobelMatrixX[9] = {
                     -1, 0, 1,
                     -2, 0, 2,
@@ -54,7 +59,7 @@ Shader "Unlit/OutlineShader"
 
                 float2 Texel = (1.0) / float2(_CameraColorTexture_TexelSize.z, _CameraColorTexture_TexelSize.w);
                 float2 uvSamples[9];
-                float3 depthSamples[9];
+                float depthSamples[9];
 
                 float3 horizTotal = float3(0,0,0);
                 float3 vertTotal = float3(0, 0, 0);
@@ -70,22 +75,29 @@ Shader "Unlit/OutlineShader"
                 uvSamples[6] = UV + float2(-Texel.x * halfScaleFloor, Texel.y * halfScaleCeil);
                 uvSamples[7] = UV + float2(0, Texel.y * halfScaleCeil);
                 uvSamples[8] = UV + float2(Texel.x, Texel.y) * halfScaleCeil;
-
+                
                 for (int i = 0; i < 9; i++)
                 {
-                    depthSamples[i] = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uvSamples[i]).rgb;
+                    depthSamples[i] = Linear01Depth(SampleSceneDepth(uvSamples[i]), _ZBufferParams);
+                    /*
+                    #if UNITY_REVERSED_Z
+                    depthSamples[i] = SampleSceneDepth(uvSamples[i]);
+                    #else
+                    depthSamples[i] = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(uvSamples[i]));
+                    #endif*/
                     horizTotal += depthSamples[i] * sobelMatrixX[i];
                     vertTotal += depthSamples[i] * sobelMatrixY[i];
                 }
 
                 float3 sobel = sqrt(horizTotal * horizTotal + vertTotal * vertTotal);
                 float sobelTotal = saturate(sobel.x + sobel.y + sobel.z);
-                sobelTotal = sobelTotal > 0.01 ? 1 : 0;
+                sobelTotal = sobelTotal > 0.001 ? 1 : 0;
                 float3 original = _CameraColorTexture.Sample(sampler_CameraColorTexture, UV).rgb;
                 float3 finalColor = lerp(original, outlineColor, sobelTotal);
-                return float4(finalColor,1);
+                
+                return float4(finalColor, 1);
             }
-
+            
             VertexOutput Vertex(VertexInput input) {
                 VertexOutput output;
                 VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS);
@@ -96,6 +108,8 @@ Shader "Unlit/OutlineShader"
 
             float4 Fragment(VertexOutput input) : SV_TARGET{
                 return Outline_float(input.uv,_Thickness,_Color);
+                
+                            
             }
             ENDHLSL
         }
