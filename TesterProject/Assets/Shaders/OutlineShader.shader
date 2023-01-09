@@ -79,19 +79,13 @@ Shader "Unlit/OutlineShader"
                 for (int i = 0; i < 9; i++)
                 {
                     depthSamples[i] = Linear01Depth(SampleSceneDepth(uvSamples[i]), _ZBufferParams);
-                    /*
-                    #if UNITY_REVERSED_Z
-                    depthSamples[i] = SampleSceneDepth(uvSamples[i]);
-                    #else
-                    depthSamples[i] = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(uvSamples[i]));
-                    #endif*/
                     horizTotal += depthSamples[i] * sobelMatrixX[i];
                     vertTotal += depthSamples[i] * sobelMatrixY[i];
                 }
 
                 float3 sobel = sqrt(horizTotal * horizTotal + vertTotal * vertTotal);
                 float sobelTotal = saturate(sobel.x + sobel.y + sobel.z);
-                sobelTotal = sobelTotal > 0.001 ? 1 : 0;
+                sobelTotal = sobelTotal > 0.01 ? 1 : 0;
                 float3 original = _CameraColorTexture.Sample(sampler_CameraColorTexture, UV).rgb;
                 float3 finalColor = lerp(original, outlineColor, sobelTotal);
                 
